@@ -1,88 +1,69 @@
-import { Component } from 'react'
+import React, { useState, useEffect } from "react";
 import ContactForm from './ContactsForm/ContactForm'
 import Filter from './Filter/Filter'
 import ContactsList from './ContactsList/ContactsList'
 import {Container} from './AppStyled'
 import { nanoid } from 'nanoid'
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  }
-  
-  componentDidMount(){
-    if(localStorage.getItem('friendsList') === null){
-      return
-    }
-    this.setState({contacts:JSON.parse(localStorage.getItem('friendsList'))})
-  }
- 
-  componentDidUpdate(prevProps, prevState){
-    if(prevState.contacts !== this.state.contacts){
-      localStorage.setItem('friendsList', JSON.stringify(this.state.contacts))
-    }
+const friendsList = JSON.parse(localStorage.getItem('friendsList'))
 
-  }
+const NewApp = () => {
+  const [contacts,setContacts] = useState(() =>{
+    if(friendsList === null){
+      return []} 
+      return friendsList})
 
-  newState = (name,number) => {
-    if(localStorage.getItem('friendsList') !== null){
-      if(this.state.contacts.find(option => option.name.toLowerCase() === `${name}`.toLowerCase())){
+  const [filter,setFilter] = useState('')
+
+  useEffect(()=>{
+    localStorage.setItem('friendsList', JSON.stringify(contacts))
+  },[contacts])
+
+  const nameChanger = (name,number) => {
+      if(contacts.find(option => option.name.toLowerCase() === `${name}`.toLowerCase())){
         return alert(`${name} is already in contact`)
       }
   
-      if(this.state.contacts.find(option => option.number === `${number}`)){
+      if(contacts.find(option => option.number === `${number}`)){
         return alert(`${number} is already in contact`)
       }
+
+      const prevState = contacts
+      const newState = [{id: `${nanoid()}`, name:`${name}`, number:`${number}`}]
+      return setContacts([...prevState,...newState])
+  }
+
+    const deleteName = (event) =>{
+      const newState = contacts.filter(option => option.id !== `${event.currentTarget.id}`)   
+      setContacts(newState)
     }
-      
-    
-
-    const updateSlice = [{id: `${nanoid()}`, name:`${name}`, number:`${number}`}]
-    const currentState = this.state.contacts
-
-    this.setState({contacts:[...currentState,...updateSlice]})
-  }
-
-  deleteName = (event) =>{
-    const currentState = this.state.contacts
-    const newState = currentState.filter(option => option.id !== `${event.currentTarget.id}`)
-    this.setState({contacts:[...newState]})
-    
-  }
-
-  filterName = (event) =>{
-    this.setState({filter:`${event.currentTarget.value}`})
-  }
   
-  
+    const filterName = (event) =>{
+        return setFilter(`${event.currentTarget.value}`)
+    }
 
-  render(){
-    const {filter} = this.state
-    const currentState = this.state.contacts
-    const newState = currentState && currentState.filter(option => option.name.toLowerCase().includes(`${filter.toLowerCase()}`))
-    
-    
-    return (
-      <Container>
-    <h1>PhoneBook</h1>
-    <ContactForm
-    newState={this.newState}
-    />
-    
-    <h2>Contacts</h2>
-    <Filter
-    filterName={this.filterName}
-    filterValue={this.state.filter}
-    />
-    {this.state.contacts && 
-    <ContactsList
-    deleteName={this.deleteName}
-    events={newState}
-    /> }
-    </Container>
-  );
+    const newState = contacts && contacts.filter(option => option.name.toLowerCase().includes(`${filter.toLowerCase()}`))
+
+      return(
+        <Container>
+        <h1>PhoneBook</h1>
+        <ContactForm
+        newName={nameChanger}
+        />
+        
+        <h2>Contacts</h2>
+        <Filter
+        filterName={filterName}
+        filterValue={filter}
+        />
+        {contacts && 
+        <ContactsList
+        deleteName={deleteName}
+        events={newState}
+        /> }
+        </Container>
+    )
 }
-};
 
-export default App
+
+export default NewApp;
